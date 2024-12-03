@@ -61,11 +61,14 @@ const optimization = () => {
 module.exports = {
   context: path.resolve(__dirname, 'src'),
   mode: 'development',
-  entry: './scripts/main.js', // Точка входа
+  entry: './scripts/main.js', // Точка входа для JS/TS
   output: {
     filename: `./scripts/${filename('js')}`,
     path: path.resolve(__dirname, 'app'),
     publicPath: '',
+  },
+  resolve: {
+    extensions: ['.ts', '.tsx', '.js'], // Разрешает файлы с этими расширениями
   },
   plugins: [
     new CleanWebpackPlugin(), // Очищает папку app
@@ -105,6 +108,11 @@ module.exports = {
         },
       },
       {
+        test: /\.ts$/,
+        exclude: /node_modules/,
+        use: 'ts-loader',
+      },
+      {
         test: /\.css$/i,
         use: [
           {
@@ -123,41 +131,41 @@ module.exports = {
             loader: MiniCssExtractPlugin.loader,
             options: {
               publicPath: (resourcePath, context) => {
-                return path.relative(path.dirname(resourcePath), context) + '/'; // добавляет ../ для background изображений
+                  return path.relative(path.dirname(resourcePath), context) + '/'; // добавляет ../ для background изображений
+                },
               },
             },
+            'css-loader', // интерпретирует @import и url() внутри CSS
+            'postcss-loader', // применяет автопрефиксер и линтер к CSS
+            'sass-loader', // загружает файлы SCSS и передает компилятору sass, а этот компилирует код в CSS
+          ],
+        },
+        {
+          test: /\.(png|jpe?g|gif|svg)$/i,
+          type: 'asset/resource', // работает так же, как и загрузчик file-loader.
+          generator: {
+            filename: `images/${filename('[ext]')}`,
           },
-          'css-loader', // интерпретирует @import и url() внутри CSS
-          'postcss-loader', // применяет автопрефиксер и линтер к CSS
-          'sass-loader', // загружает файлы SCSS и передает компилятору sass, а этот компилирует код в CSS
-        ],
-      },
-      {
-        test: /\.(png|jpe?g|gif|svg)$/i,
-        type: 'asset/resource', // работает так же, как и загрузчик file-loader.
-        generator: {
-          filename: `images/${filename('[ext]')}`,
         },
-      },
-      {
-        test: /\.(woff|woff2|eot|ttf|otf)$/i,
-        type: 'asset/resource',
-        generator: {
-          filename: `fonts/${filename('[ext]')}`,
+        {
+          test: /\.(woff|woff2|eot|ttf|otf)$/i,
+          type: 'asset/resource',
+          generator: {
+            filename: `fonts/${filename('[ext]')}`,
+          },
         },
-      },
-    ],
-  },
-  devServer: {
-    // Конфигурация для локального сервера разработки.
-    historyApiFallback: true,
-    static: {
-      directory: path.join(__dirname, 'app'),
+      ],
     },
-    open: true, // Автоматическое открытие браузера
-    hot: true, // обрабатывает изменения без перезагрузки страницы
-    port: 3000,
-  },
-  devtool: isProd ? false : 'source-map', // остлеживание файлов в devtools
-  optimization: optimization(),
-};
+    devServer: {
+      // Конфигурация для локального сервера разработки.
+      historyApiFallback: true,
+      static: {
+        directory: path.join(__dirname, 'app'),
+      },
+      open: true, // Автоматическое открытие браузера
+      hot: true, // обрабатывает изменения без перезагрузки страницы
+      port: 3000,
+    },
+    devtool: isProd ? false : 'source-map', // остлеживание файлов в devtools
+    optimization: optimization(),
+  };
